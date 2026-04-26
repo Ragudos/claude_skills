@@ -8,11 +8,11 @@ This script generates the `@theme` block automatically, preventing drift.
 ```ts
 // scripts/generate-css-theme.ts
 // Run: npx ts-node scripts/generate-css-theme.ts
-import { writeFileSync } from 'fs';
-import { tokens } from '../theme/index';
+import { writeFileSync } from "fs";
+import { tokens } from "../theme/index";
 
 function toKebab(str: string): string {
-  return str.replace(/([A-Z])/g, '-$1').toLowerCase();
+  return str.replace(/([A-Z])/g, "-$1").toLowerCase();
 }
 
 function generateThemeBlock(): string {
@@ -24,21 +24,21 @@ function generateThemeBlock(): string {
     lines.push(`  --color-${toKebab(key)}: initial;`);
   }
 
-  lines.push('');
+  lines.push("");
 
   // Spacing vars
   for (const key of Object.keys(tokens.spacing)) {
     lines.push(`  --spacing-${key}: initial;`);
   }
 
-  lines.push('');
+  lines.push("");
 
   // Radii vars
   for (const key of Object.keys(tokens.radii)) {
     lines.push(`  --radius-${key}: initial;`);
   }
 
-  return lines.join('\n');
+  return lines.join("\n");
 }
 
 const output = `@import "tailwindcss";
@@ -50,8 +50,8 @@ ${generateThemeBlock()}
 }
 `;
 
-writeFileSync('./global.css', output, 'utf-8');
-console.log('✓ global.css generated from theme/index.ts');
+writeFileSync("./global.css", output, "utf-8");
+console.log("✓ global.css generated from theme/index.ts");
 ```
 
 ## Add as a package.json Script
@@ -79,6 +79,7 @@ Or with `tsx` (faster, no tsconfig needed):
 ```bash
 npx expo install --dev tsx
 ```
+
 ```json
 "theme:sync": "npx tsx scripts/generate-css-theme.ts"
 ```
@@ -130,18 +131,20 @@ Add a CI check to catch cases where someone edits `global.css` manually:
 
 ```ts
 // scripts/check-css-theme.ts
-import { execSync } from 'child_process';
-import { readFileSync } from 'fs';
+import { execSync } from "child_process";
+import { readFileSync } from "fs";
 
-const before = readFileSync('./global.css', 'utf-8');
-execSync('npx tsx scripts/generate-css-theme.ts');
-const after = readFileSync('./global.css', 'utf-8');
+const before = readFileSync("./global.css", "utf-8");
+execSync("npx tsx scripts/generate-css-theme.ts");
+const after = readFileSync("./global.css", "utf-8");
 
 if (before !== after) {
-  console.error('❌ global.css is out of sync with theme/index.ts. Run npm run theme:sync');
+  console.error(
+    "❌ global.css is out of sync with theme/index.ts. Run npm run theme:sync",
+  );
   process.exit(1);
 }
-console.log('✓ global.css is in sync with theme/index.ts');
+console.log("✓ global.css is in sync with theme/index.ts");
 ```
 
 ```json

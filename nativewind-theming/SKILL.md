@@ -35,6 +35,7 @@ tailwind.config.ts    ← Extends Tailwind from theme/index.ts tokens
 ```
 
 **Data flow:**
+
 ```
 theme/index.ts
     ↓               ↓                    ↓
@@ -57,70 +58,70 @@ This is the only file you ever edit when changing a color, spacing value, or fon
 export const tokens = {
   colors: {
     // Semantic names — map to raw values or palette aliases
-    background:       '#ffffff',
-    backgroundMuted:  '#f4f4f5',
-    foreground:       '#09090b',
-    foregroundMuted:  '#71717a',
-    primary:          '#6d28d9',
-    primaryForeground:'#ffffff',
-    secondary:        '#e4e4e7',
-    secondaryForeground: '#18181b',
-    accent:           '#f59e0b',
-    accentForeground: '#ffffff',
-    border:           '#e4e4e7',
-    ring:             '#6d28d9',
-    destructive:      '#ef4444',
-    destructiveForeground: '#ffffff',
+    background: "#ffffff",
+    backgroundMuted: "#f4f4f5",
+    foreground: "#09090b",
+    foregroundMuted: "#71717a",
+    primary: "#6d28d9",
+    primaryForeground: "#ffffff",
+    secondary: "#e4e4e7",
+    secondaryForeground: "#18181b",
+    accent: "#f59e0b",
+    accentForeground: "#ffffff",
+    border: "#e4e4e7",
+    ring: "#6d28d9",
+    destructive: "#ef4444",
+    destructiveForeground: "#ffffff",
 
     // Dark mode overrides — same keys, different values
     dark: {
-      background:       '#09090b',
-      backgroundMuted:  '#18181b',
-      foreground:       '#fafafa',
-      foregroundMuted:  '#a1a1aa',
-      primary:          '#7c3aed',
-      primaryForeground:'#ffffff',
-      secondary:        '#27272a',
-      secondaryForeground: '#fafafa',
-      accent:           '#f59e0b',
-      accentForeground: '#000000',
-      border:           '#27272a',
-      ring:             '#7c3aed',
-      destructive:      '#f87171',
-      destructiveForeground: '#000000',
+      background: "#09090b",
+      backgroundMuted: "#18181b",
+      foreground: "#fafafa",
+      foregroundMuted: "#a1a1aa",
+      primary: "#7c3aed",
+      primaryForeground: "#ffffff",
+      secondary: "#27272a",
+      secondaryForeground: "#fafafa",
+      accent: "#f59e0b",
+      accentForeground: "#000000",
+      border: "#27272a",
+      ring: "#7c3aed",
+      destructive: "#f87171",
+      destructiveForeground: "#000000",
     },
   },
 
   spacing: {
-    xs:  '4px',
-    sm:  '8px',
-    md:  '16px',
-    lg:  '24px',
-    xl:  '32px',
-    '2xl': '48px',
-    '3xl': '64px',
+    xs: "4px",
+    sm: "8px",
+    md: "16px",
+    lg: "24px",
+    xl: "32px",
+    "2xl": "48px",
+    "3xl": "64px",
   },
 
   radii: {
-    sm:   '4px',
-    md:   '8px',
-    lg:   '12px',
-    xl:   '16px',
-    full: '9999px',
+    sm: "4px",
+    md: "8px",
+    lg: "12px",
+    xl: "16px",
+    full: "9999px",
   },
 
   typography: {
-    fontSans:  'Inter_400Regular',
-    fontBold:  'Inter_700Bold',
+    fontSans: "Inter_400Regular",
+    fontBold: "Inter_700Bold",
     // Scale in px — used in Tailwind config and StyleSheet
-    textXs:   12,
-    textSm:   14,
+    textXs: 12,
+    textSm: 14,
     textBase: 16,
-    textLg:   18,
-    textXl:   20,
-    text2xl:  24,
-    text3xl:  30,
-    text4xl:  36,
+    textLg: 18,
+    textXl: 20,
+    text2xl: 24,
+    text3xl: 30,
+    text4xl: 36,
   },
 } as const;
 
@@ -128,6 +129,7 @@ export type Tokens = typeof tokens;
 ```
 
 **Key rules:**
+
 - All values are strings (for CSS vars) except `typography.*` sizes which are numbers (for StyleSheet).
 - Use semantic names (e.g. `background`, not `white`). Palette aliases live in comments only.
 - The `dark` block lives inside `colors` — not a separate top-level key.
@@ -140,30 +142,33 @@ Converts the token object into a CSS custom-property string for injection.
 
 ```ts
 // theme/css-vars.ts
-import { tokens } from './index';
+import { tokens } from "./index";
 
-type ColorTokens = Omit<typeof tokens.colors, 'dark'>;
+type ColorTokens = Omit<typeof tokens.colors, "dark">;
 
 function toKebab(str: string): string {
-  return str.replace(/([A-Z])/g, '-$1').toLowerCase();
+  return str.replace(/([A-Z])/g, "-$1").toLowerCase();
 }
 
-function buildColorVars(colors: Record<string, string>, prefix = '--color'): string {
+function buildColorVars(
+  colors: Record<string, string>,
+  prefix = "--color",
+): string {
   return Object.entries(colors)
     .map(([key, val]) => `  ${prefix}-${toKebab(key)}: ${val};`)
-    .join('\n');
+    .join("\n");
 }
 
 function buildSpacingVars(): string {
   return Object.entries(tokens.spacing)
     .map(([key, val]) => `  --spacing-${key}: ${val};`)
-    .join('\n');
+    .join("\n");
 }
 
 function buildRadiiVars(): string {
   return Object.entries(tokens.radii)
     .map(([key, val]) => `  --radius-${key}: ${val};`)
-    .join('\n');
+    .join("\n");
 }
 
 const { dark, ...lightColors } = tokens.colors;
@@ -188,9 +193,9 @@ ${buildColorVars(dark as Record<string, string>)}
  */
 export function buildVarsObject(
   colorMap: Record<string, string>,
-  mode: 'light' | 'dark' = 'light',
+  mode: "light" | "dark" = "light",
 ): Record<string, string> {
-  const source = mode === 'dark' ? dark : colorMap;
+  const source = mode === "dark" ? dark : colorMap;
   const result: Record<string, string> = {};
 
   for (const [key, val] of Object.entries(source)) {
@@ -215,13 +220,13 @@ Extends Tailwind's theme **from** the token file. Never duplicate values here.
 
 ```ts
 // tailwind.config.ts
-import type { Config } from 'tailwindcss';
-import { tokens } from './theme/index';
+import type { Config } from "tailwindcss";
+import { tokens } from "./theme/index";
 
 const { dark, ...lightColors } = tokens.colors;
 
 function toKebab(str: string): string {
-  return str.replace(/([A-Z])/g, '-$1').toLowerCase();
+  return str.replace(/([A-Z])/g, "-$1").toLowerCase();
 }
 
 // Map token keys → CSS variable references
@@ -233,13 +238,16 @@ const colorAliases = Object.fromEntries(
 ) as Record<string, string>;
 
 export default {
-  content: ['./app/**/*.{ts,tsx}', './components/**/*.{ts,tsx}'],
-  presets: [require('nativewind/preset')],
+  content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
+  presets: [require("nativewind/preset")],
   theme: {
     extend: {
       colors: colorAliases,
       spacing: Object.fromEntries(
-        Object.entries(tokens.spacing).map(([k, v]) => [k, `var(--spacing-${k})`]),
+        Object.entries(tokens.spacing).map(([k, v]) => [
+          k,
+          `var(--spacing-${k})`,
+        ]),
       ),
       borderRadius: Object.fromEntries(
         Object.entries(tokens.radii).map(([k, v]) => [k, `var(--radius-${k})`]),
@@ -249,14 +257,14 @@ export default {
         bold: [tokens.typography.fontBold],
       },
       fontSize: {
-        xs:   tokens.typography.textXs,
-        sm:   tokens.typography.textSm,
+        xs: tokens.typography.textXs,
+        sm: tokens.typography.textSm,
         base: tokens.typography.textBase,
-        lg:   tokens.typography.textLg,
-        xl:   tokens.typography.textXl,
-        '2xl': tokens.typography.text2xl,
-        '3xl': tokens.typography.text3xl,
-        '4xl': tokens.typography.text4xl,
+        lg: tokens.typography.textLg,
+        xl: tokens.typography.textXl,
+        "2xl": tokens.typography.text2xl,
+        "3xl": tokens.typography.text3xl,
+        "4xl": tokens.typography.text4xl,
       },
     },
   },
@@ -275,21 +283,25 @@ the CSS variables**.
 
 ```tsx
 // app/_layout.tsx
-import { useEffect, useState } from 'react';
-import { View, useColorScheme } from 'react-native';
-import { vars } from 'nativewind';
-import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { buildVarsObject } from '@/theme/css-vars';
-import { tokens } from '@/theme/index';
+import { useEffect, useState } from "react";
+import { View, useColorScheme } from "react-native";
+import { vars } from "nativewind";
+import { Stack } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import { buildVarsObject } from "@/theme/css-vars";
+import { tokens } from "@/theme/index";
 
 SplashScreen.preventAutoHideAsync();
 
 const { dark, ...lightColors } = tokens.colors;
 
 // Pre-build both var objects — no runtime computation on re-renders
-const lightThemeVars = vars(buildVarsObject(lightColors as Record<string, string>, 'light'));
-const darkThemeVars  = vars(buildVarsObject(lightColors as Record<string, string>, 'dark'));
+const lightThemeVars = vars(
+  buildVarsObject(lightColors as Record<string, string>, "light"),
+);
+const darkThemeVars = vars(
+  buildVarsObject(lightColors as Record<string, string>, "dark"),
+);
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -310,7 +322,7 @@ export default function RootLayout() {
     <View
       style={[
         { flex: 1 },
-        colorScheme === 'dark' ? darkThemeVars : lightThemeVars,
+        colorScheme === "dark" ? darkThemeVars : lightThemeVars,
       ]}
     >
       <Stack screenOptions={{ headerShown: false }} />
@@ -378,14 +390,14 @@ For code that can't use Tailwind class names (StyleSheet, Animated, third-party 
 
 ```ts
 // theme/use-theme.ts
-import { useColorScheme } from 'react-native';
-import { tokens } from './index';
+import { useColorScheme } from "react-native";
+import { tokens } from "./index";
 
 const { dark, ...lightColors } = tokens.colors;
 
 export function useTheme() {
   const scheme = useColorScheme();
-  const isDark = scheme === 'dark';
+  const isDark = scheme === "dark";
 
   const colors = isDark
     ? (dark as Record<string, string>)
@@ -402,9 +414,10 @@ export function useTheme() {
 ```
 
 **Usage:**
+
 ```tsx
-import { StyleSheet, View } from 'react-native';
-import { useTheme } from '@/theme/use-theme';
+import { StyleSheet, View } from "react-native";
+import { useTheme } from "@/theme/use-theme";
 
 export function Card({ children }: { children: React.ReactNode }) {
   const { colors, radii, spacing } = useTheme();
@@ -424,8 +437,9 @@ export function Card({ children }: { children: React.ReactNode }) {
 ```
 
 **For Animated values** — use tokens directly (no hook needed, values are static):
+
 ```ts
-import { tokens } from '@/theme/index';
+import { tokens } from "@/theme/index";
 const { dark, ...light } = tokens.colors;
 // Reference light.primary or dark.primary directly in Animated.timing toValue
 ```
@@ -439,10 +453,10 @@ override** (user toggle):
 
 ```tsx
 // theme/color-scheme-store.ts
-import { create } from 'zustand';
-import { Appearance } from 'react-native';
+import { create } from "zustand";
+import { Appearance } from "react-native";
 
-type Scheme = 'light' | 'dark' | 'system';
+type Scheme = "light" | "dark" | "system";
 
 interface ColorSchemeStore {
   preference: Scheme;
@@ -450,10 +464,10 @@ interface ColorSchemeStore {
 }
 
 export const useColorSchemeStore = create<ColorSchemeStore>((set) => ({
-  preference: 'system',
+  preference: "system",
   setPreference: (preference) => {
     set({ preference });
-    if (preference !== 'system') {
+    if (preference !== "system") {
       Appearance.setColorScheme(preference); // propagates to useColorScheme()
     } else {
       Appearance.setColorScheme(null); // reset to system
@@ -478,14 +492,14 @@ style={[{ flex: 1 }, activeScheme === 'dark' ? darkThemeVars : lightThemeVars]}
 
 ## 9. Common Pitfalls
 
-| Problem | Cause | Fix |
-|---|---|---|
-| `var(--color-*)` renders as nothing | `vars()` not applied to root View | Wrap root in `<View style={vars(...)}>` in `_layout.tsx` |
-| Dark mode not updating | `useColorScheme()` used inside a non-reactive context | Move scheme check into a component using the hook |
-| StyleSheet values look wrong | Using CSS string `'16px'` directly in StyleSheet | Use `parseInt(tokens.spacing.md)` or store px values as numbers |
-| Tailwind class `bg-primary` not working | Key not in `@theme` block in `global.css` | Add `--color-primary: initial;` to `global.css` `@theme` |
-| Type errors on `tokens.colors.dark.*` | `dark` is nested under `colors` | Destructure: `const { dark, ...light } = tokens.colors` |
-| vars() object recomputed every render | Built inline in JSX | Pre-build outside component: `const lightVars = vars(...)` |
+| Problem                                 | Cause                                                 | Fix                                                             |
+| --------------------------------------- | ----------------------------------------------------- | --------------------------------------------------------------- |
+| `var(--color-*)` renders as nothing     | `vars()` not applied to root View                     | Wrap root in `<View style={vars(...)}>` in `_layout.tsx`        |
+| Dark mode not updating                  | `useColorScheme()` used inside a non-reactive context | Move scheme check into a component using the hook               |
+| StyleSheet values look wrong            | Using CSS string `'16px'` directly in StyleSheet      | Use `parseInt(tokens.spacing.md)` or store px values as numbers |
+| Tailwind class `bg-primary` not working | Key not in `@theme` block in `global.css`             | Add `--color-primary: initial;` to `global.css` `@theme`        |
+| Type errors on `tokens.colors.dark.*`   | `dark` is nested under `colors`                       | Destructure: `const { dark, ...light } = tokens.colors`         |
+| vars() object recomputed every render   | Built inline in JSX                                   | Pre-build outside component: `const lightVars = vars(...)`      |
 
 ---
 
