@@ -367,59 +367,34 @@ module.exports = {
 }
 ```
 
-## Semantic Release Integration
+## Release Please Integration
+
+Release Please automatically generates changelogs and bumps semantic versions based on Conventional Commits. Instead of silently publishing in the background, it opens a "Release PR" that updates your `CHANGELOG.md` and `package.json` files.
 
 ### Configuration
 
+Release Please requires two files in the root of your repository to manage a monorepo workspace:
+
 ```json
-// .releaserc
+// release-please-config.json
 {
-  "branches": ["main"],
-  "plugins": [
-    [
-      "@semantic-release/commit-analyzer",
-      {
-        "preset": "conventionalcommits",
-        "releaseRules": [
-          { "type": "feat", "release": "minor" },
-          { "type": "fix", "release": "patch" },
-          { "type": "perf", "release": "patch" },
-          { "type": "revert", "release": "patch" },
-          { "breaking": true, "release": "major" }
-        ]
-      }
-    ],
-    [
-      "@semantic-release/release-notes-generator",
-      {
-        "preset": "conventionalcommits"
-      }
-    ],
-    "@semantic-release/changelog",
-    "@semantic-release/npm",
-    "@semantic-release/github"
-  ]
+  "packages": {
+    "apps/mobile": {
+      "release-type": "node",
+      "package-name": "@my-monorepo/mobile"
+    },
+    "apps/web": {
+      "release-type": "node",
+      "package-name": "@my-monorepo/web"
+    }
+  }
 }
-```
 
-### Version Bumping
-
-```bash
-# These commits determine version bumps:
-
-# PATCH (1.0.x)
-fix: correct typo in error message
-perf: optimize database query
-
-# MINOR (1.x.0)
-feat: add user profile page
-feat(api): implement caching layer
-
-# MAJOR (x.0.0)
-feat!: redesign authentication system
-fix!: change API response format
-
-BREAKING CHANGE: Response format changed from XML to JSON
+// .release-please-manifest.json
+{
+  "apps/mobile": "1.0.0",
+  "apps/web": "1.0.0"
+}
 ```
 
 ## Rewriting History
