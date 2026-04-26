@@ -46,36 +46,46 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write # Required for Jest coverage PR comments
+  pull-requests: write
 
 jobs:
   # ---------------------------------------------------------
-  # 1. CODE QUALITY & SECURITY CHECKS
+  # 1. VERSIONING & RELEASE MANAGER
+  # ---------------------------------------------------------
+  release-please:
+    runs-on: ubuntu-latest
+    needs: [lint, security, test]
+    if: github.ref == 'refs/heads/main'
+    outputs:
+      mobile_release_created: ${{ steps.release.outputs['apps/mobile--release_created'] }}
+      mobile_version: ${{ steps.release.outputs['apps/mobile--version'] }}
+    steps:
+      - name: Run Release Please
+        id: release
+        uses: googleapis/release-please-action@v4
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  # ---------------------------------------------------------
+  # 2. CODE QUALITY & SECURITY CHECKS (Runs on all packages)
   # ---------------------------------------------------------
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-      - run: npm ci
-      - run: npm run lint
+      - uses: ./.github/actions/setup-pnpm
+      - name: Lint all workspaces
+        run: pnpm -r run lint
 
   security:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-      - run: npm ci
+      - uses: ./.github/actions/setup-pnpm
 
       - name: Run security audit
-        run: npm audit --audit-level=high || true # Set to true to prevent failing the build on minor audits
+        run: pnpm audit --audit-level=high || true
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
@@ -90,14 +100,10 @@ jobs:
     needs: lint
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-      - run: npm ci
+      - uses: ./.github/actions/setup-pnpm
 
       - name: Run Tests with Coverage
-        run: npx vitest run --coverage.enabled true --coverage.reporter="text" --coverage.reporter="json-summary" --coverage.reporter="html"
+        run: pnpm -r run test --coverage.enabled true --coverage.reporter="text" --coverage.reporter="json-summary" --coverage.reporter="html"
 
       - name: Vitest Coverage Comment
         if: github.event_name == 'pull_request'
@@ -113,7 +119,7 @@ jobs:
           retention-days: 30
 
   # ---------------------------------------------------------
-  # 2. STAGING TRACK (DEVELOP BRANCH)
+  # 3. STAGING TRACK (DEVELOP BRANCH)
   # ---------------------------------------------------------
   build-staging:
     runs-on: ubuntu-latest
@@ -122,16 +128,15 @@ jobs:
     environment: staging
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-      - run: npm ci
+      - uses: ./.github/actions/setup-pnpm
+
       - uses: expo/expo-github-action@v8
         with:
           eas-version: 18.8.1
           token: ${{ secrets.EXPO_TOKEN }}
+
       - name: Build staging (internal)
+        working-directory: apps/mobile
         run: eas build --profile preview --platform all --non-interactive --wait
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
@@ -143,10 +148,7 @@ jobs:
     environment: staging
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
+      - uses: ./.github/actions/setup-pnpm
 
       - name: Setup EAS CLI
         uses: expo/expo-github-action@v8
@@ -155,6 +157,7 @@ jobs:
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Download APK from Expo
+        working-directory: apps/mobile
         run: eas build:download --profile preview --platform android --non-interactive
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
@@ -174,8 +177,8 @@ jobs:
           script: |
             curl -Ls "https://get.maestro.mobile.dev" | bash
             export PATH="$PATH":"$HOME/.maestro/bin"
-            adb install *.apk
-            maestro test .maestro/
+            adb install apps/mobile/*.apk
+            maestro test apps/mobile/.maestro/
 
       - name: Upload Maestro Logs (On Failure)
         uses: actions/upload-artifact@v4
@@ -191,35 +194,67 @@ jobs:
     environment: staging
     steps:
       - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-pnpm
+
       - uses: expo/expo-github-action@v8
         with:
           eas-version: 18.8.1
           token: ${{ secrets.EXPO_TOKEN }}
+
       - name: Submit to internal track
+        working-directory: apps/mobile
         run: eas submit --profile preview --platform all --non-interactive
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
   # ---------------------------------------------------------
-  # 3. PRODUCTION TRACK (MAIN BRANCH)
+  # 4A. PRODUCTION OTA PATCHES (Triggered by fix: commits)
   # ---------------------------------------------------------
-  build-production:
+  ota-production:
     runs-on: ubuntu-latest
-    needs: [lint, security, test]
-    if: github.ref == 'refs/heads/main'
+    needs: [lint, security, test, release-please]
+    if: >
+      github.ref == 'refs/heads/main' && 
+      needs.release-please.outputs.mobile_release_created == 'true' && 
+      !endsWith(needs.release-please.outputs.mobile_version, '.0')
     environment: production
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-      - run: npm ci
+      - uses: ./.github/actions/setup-pnpm
+
       - uses: expo/expo-github-action@v8
         with:
           eas-version: 18.8.1
           token: ${{ secrets.EXPO_TOKEN }}
-      - name: Build production
+
+      - name: Publish OTA Update
+        working-directory: apps/mobile
+        run: eas update --branch production --message "Release v${{ needs.release-please.outputs.mobile_version }}" --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+  # ---------------------------------------------------------
+  # 4B. PRODUCTION FULL BUILDS (Triggered by feat: or breaking commits)
+  # ---------------------------------------------------------
+  build-production:
+    runs-on: ubuntu-latest
+    needs: [lint, security, test, release-please]
+    if: >
+      github.ref == 'refs/heads/main' && 
+      needs.release-please.outputs.mobile_release_created == 'true' && 
+      endsWith(needs.release-please.outputs.mobile_version, '.0')
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-pnpm
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: 18.8.1
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Build production binary
+        working-directory: apps/mobile
         run: eas build --profile production --platform all --non-interactive --wait
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
@@ -227,36 +262,21 @@ jobs:
   deploy-production:
     runs-on: ubuntu-latest
     needs: build-production
-    if: github.ref == 'refs/heads/main'
     environment: production
     steps:
       - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-pnpm
+
       - uses: expo/expo-github-action@v8
         with:
           eas-version: 18.8.1
           token: ${{ secrets.EXPO_TOKEN }}
-      - name: Submit to stores
+
+      - name: Submit to app stores
+        working-directory: apps/mobile
         run: eas submit --profile production --platform all --non-interactive
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-
-  trigger-release:
-    runs-on: ubuntu-latest
-    needs: deploy-production
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - name: Push to release branch
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            await github.rest.git.updateRef({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: 'heads/release',
-              sha: context.sha,
-              force: true
-            })
 ```
 
 ### Reusable Workflows
