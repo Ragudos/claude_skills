@@ -1,6 +1,6 @@
 ---
 name: git-workflow
-description: "Use when establishing branching strategies, implementing Conventional Commits, creating or reviewing PRs, resolving PR review comments, merging PRs (including CI verification, auto-merge queues, and post-merge cleanup), managing PR review threads, merging PRs with signed commits, handling merge conflicts, creating releases, integrating Git with CI/CD, setting up git hooks (lefthook, captainhook, husky, pre-commit), or debugging hook-install failures in git worktrees."
+description: "Use when establishing branching strategies, implementing Conventional Commits, creating or reviewing PRs, resolving PR review comments, merging PRs (including CI verification, auto-merge queues, and post-merge cleanup), managing PR review threads, merging PRs with signed commits, handling merge conflicts, creating releases, integrating Git with CI/CD, setting up git hooks (lefthook, captainhook, husky, pre-commit), debugging hook-install failures in git worktrees, or creating GitHub issues with templates, labels, projects, and milestones."
 compatibility: "Requires git, gh CLI."
 allowed-tools: Bash(git:*) Bash(gh:*) Read Write
 metadata:
@@ -36,6 +36,7 @@ See `references/pull-request-workflow.md` for the merge-gate command, atomic-com
 | `references/git-hooks-setup.md`       | Hook frameworks, detection, recommended hooks per stage                                          |
 | `references/claude-code-hooks.md`     | Claude Code `settings.json` hooks — merge gate, cache-path rejection, auto-lint                  |
 | `references/code-quality-tools.md`    | git-absorb                                                                                       |
+| `references/issue-management.md`      | Issue templates, labels schema, Projects v2 linking, milestones, `gh issue create` reference     |
 
 ## Conventional Commits
 
