@@ -1,9 +1,14 @@
 {
+  "$schema": "https://schemas.agentskills.io/discovery/0.2.0/schema.json",
   "skills": [
     {
       "name": "git-workflow",
+      "type": "skill-md",
       "description": "Enforces conventional commits, CI/CD, and linear release workflows.",
-      "path": "/git-workflow"
+      "url": "/git-workflow/SKILL.md",
+      "files": [
+        "/git-workflow/SKILL.md"
+      ]
     }
   ]
 }
