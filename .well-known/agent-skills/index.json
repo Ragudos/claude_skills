@@ -5,9 +5,9 @@
       "name": "git-workflow",
       "type": "skill-md",
       "description": "Enforces conventional commits, CI/CD, and linear release workflows.",
-      "url": "/git-workflow/SKILL.md",
+      "url": "https://kclaudeskills.netlify.app/git-workflow/SKILL.md",
       "files": [
-        "/git-workflow/SKILL.md"
+        "https://kclaudeskills.netlify.app/git-workflow/SKILL.md"
       ]
     }
   ]
